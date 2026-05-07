@@ -225,3 +225,93 @@ Cuando ocurre un use affter free se crea un `dangling pointer` que es un puntero
  - **Corrupcion de datos y fuga de datos:** los atacantes pueden leer informacion que luego sera alojada en la direccion de este puntero colgante.
 
 ## Punto 3: Traduccion de direcciones.
+
+
+###  Compile y ejecute. Muestre la salida completa. ¿Que ocurre al acceder a VA=64 y VA=100 en el Proceso A? ¿Que haria el SO real ante esta excepcion?
+![ejecucion del programa base bounds](/punto-3/images/execution.png)
+
+El proceso A define el registro bunds como 64 asi que todas las direcciones virtuales se mapearan desde la 0 hasta la 63. Y las direcciones 64 y 100 estan fuera del rango. El sistema operativo en este caso debera enviar un `segmentation fault` pues el proceso esta intentando acceder a una direccion de memoria que no le pertenece.
+
+### Agregue un Proceso C (base=0, bounds=32) al programa y traduzca las mismas VAs. ¿Puede el Proceso A acceder a las direcciones del Proceso C directamente? Justifique.
+
+Codigo agregando el proceso C
+```{c}
+// base_bounds.c
+#include <stdio.h>
+
+typedef struct
+{
+  int base;
+  int bounds;
+} Registro;
+
+/* Traduce VA -> PA; imprime excepcion si viola bounds */
+int traducir(Registro r, int va)
+{
+  if (va < 0 || va >= r.bounds)
+  {
+    printf(" [EXCEPCION] VA=%d viola bounds=%d\n",
+           va, r.bounds);
+    return -1;
+  }
+  return r.base + va;
+}
+
+int main()
+{
+  Registro procC = {0, 32};
+  Registro procA = {32, 64};  /* base=32, bounds=64 */
+  Registro procB = {128, 80}; /* base=128, bounds=80 */
+  int vas[] = {0, 10, 63, 64, 100};
+  int n = sizeof(vas) / sizeof(vas[0]);
+
+  printf("--- Proceso A (base=%d, bounds=%d) ---\n",
+         procA.base, procA.bounds);
+  for (int i = 0; i < n; i++)
+  {
+    int pa = traducir(procA, vas[i]);
+    if (pa != -1)
+      printf(" VA=%3d -> PA=%3d\n", vas[i], pa);
+  }
+  
+  printf("--- Proceso B (base=%d, bounds=%d) ---\n",
+         procB.base, procB.bounds);
+  for (int i = 0; i < n; i++)
+  {
+    int pa = traducir(procB, vas[i]);
+    if (pa != -1)
+      printf(" VA=%3d -> PA=%3d\n", vas[i], pa);
+  }
+
+  printf("--- Proceso C (base=%d, bounds=%d) ---\n",
+         procC.base, procC.bounds);
+  for (int i = 0; i < n; i++)
+  {
+    int pa = traducir(procC, vas[i]);
+    if (pa != -1)
+      printf(" VA%3d -> PA=%d\n", vas[i], pa);
+  }
+  return 0;
+}
+```
+
+Ejecucion del script con el añadiendo el proceso C 
+![ejecucion con el proceso c](/punto-3/images/process_c_execution.png)
+
+En la imagen se ve que las direcciones tal que 
+
+$$ \text{direction} \geq 32 $$
+
+mandarán una exepcion pues estas sobrepasan el limite del registro `bounds`.
+
+Ahora ¿Puede el proceso A acceder a las direcciones de C directamente? La respuesta corta es no. Segun el base and bounds, las direecciones se mapean a la memoria fisica tal que todas las direcciones son contiguas.
+
+- **Proceso A**: $base=32, bounds=64$, si mapeamos a la memoria fisica, la memoria del proceso A iniciaria en el registro 32 y se cuentan 64 incluyendo el 32 hacia adelante. asi que el rango que este proceso tendria seria: $[32, 95]$
+
+- **Proceso C**: $base=0, bounds=32$, haciendo lo mismo que con el proceso A, el rango de direcciones del proceso C en la memoria fisica es: $[0, 31]$
+
+Como se ve en los rangos no se translapan ni se crusan, por esta razon el proces A es incapas de acceder a los datos que estan en el proceso C.
+
+### ¿Cuál es la limitacion principal del esquema base & bounds que motiva el surgimiento de la segmentacion?
+
+El prinicipal problema del base and bounds, es la **fragmentacion interna** que es la perdida de memoria en por la parte no usada de memoria cuando se asignan particiones con tamaños fijos, para todo el bloque de memoria que usará un proceso
