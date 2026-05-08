@@ -315,3 +315,76 @@ Como se ve en los rangos no se translapan ni se crusan, por esta razon el proces
 ### ¿Cuál es la limitacion principal del esquema base & bounds que motiva el surgimiento de la segmentacion?
 
 El prinicipal problema del base and bounds, es la **fragmentacion interna** que es la perdida de memoria en por la parte no usada de memoria cuando se asignan particiones con tamaños fijos, para todo el bloque de memoria que usará un proceso
+
+
+
+
+
+## Punto 7: TLB (translation lookaside buffer)
+
+Ejecucion del codigo durante 3 veces 
+
+![ejecucion del codigo 3 veces](/punto-7/images/3-execution.png)
+
+### ¿Cu´antas veces mas lento es el acceso aleatorio frente al secuencial? Muestre el promedio de 3 ejecuciones de tlb locality.
+
+$\text{acceso secuencial} $= $[13.53, 18.73, 19.38]ms$
+
+$\text{acceso aleatorio} = [41.01, 57.59, 42.92]ms$
+
+
+$$
+Avg(\text{acceso secuencial}) = \frac{51.64}{3} \approx 17.213
+$$
+
+$$
+Avg(\text{acceso aleatorio}) = \frac{141.52}{3} \approx 47.173
+$$
+
+¿En que porcentaje es mas lento el acceso aleatorio?
+
+$$
+\text{Porcentaje} = \frac{47.173 - 17.213}{17.213} \times 100\% \approx 174\%
+$$
+
+EL acceso aleatorio es un $174\%$ mas lento que el acceso secuencial
+
+### Explique con el modelo del TLB por qu´e el acceso aleatorio es mas lento. ¿Qu´e ocurre con el hit rate en cada caso?
+
+Porque el sistema trae la informacion en bloques, asi que es muy probable que si leo un indice en un array, cuando lea el que esta justamente despues tambien este dentro del bloque de la memoria que se guarda en cache, provocando un `hit`, ahorrandome la necesidad de ir a la memoria principal para leer el indice. A diferencia del aleatorio, pues es como los accesos no son necesariamente contiguos es menos probable que la informacion este dentro de un bloque que este en la memoria cache, eso hace que haya un `miss` provocando mas lentitud en la carga de datos. De esta forma vemos que cuando el acceso a memoria es aleatorio se tiene una tasa de `hits` mas baja
+
+###  Si el tamaño de pagina fuera 64 KB en lugar de 4 KB, ¿mejorar´ıa o empeorar´ıa la situaci´on con accesos aleatorios? Justifique desde el punto de vista del TLB y del uso de memoria.
+
+Desde un punto de vista de la TLB el hit rate deberia mejorar porque teniendo bloques mas grandes hay mas probabilidad de que un dato aleatorio este dentro de aquel bloque. Pero esta mejora puede que no sea significativa, pues la cantidad de espacios en memoria, es demasiado grande comparado con lo que puede almacenar la TLB.
+
+### Un TLB con 64 entradas (fully associative) y paginas de 4 KB. ¿Cuanta memoria puede cubrir sin generar misses? ¿Es suficiente para un proceso moderno t´ıpico?
+
+Puede cubrir $64$ entradas de $4 KB$ cada una es decir unos $256KB$. Lo cual con los procesadores actuales es muy generoso pues los procesdores intel de $14^a$ - $16^a$ generacion tienen unas tablas de mas o menos $100KB$ por nucleo. Eso si estas tienen diferentes niveles de cache, las mas rapidas tienen entradas muy pequeñas hasta de $8 \text{ bytes}$ para favorecer la velocidad.
+
+### Consulte: ¿Qu´e es un TLB shootdown y en que situaci´on ocurre en sistemas multiprocesador? ¿Por qu´e es una operaci´on costosa?
+
+Un TLB shootdown es un mecanismo de software utilizado en sistemas multiprocesador donde un procesador (CPU) obliga a otros procesadores a invalidar (vaciar) sus memorias caché de traducción de direcciones virtuales a físicas (TLB - Translation Lookaside Buffer). Este proceso es necesario para mantener la consistencia de la memoria cuando el sistema operativo cambia la tabla de páginas, por ejemplo, al liberar o mover memoria
+
+Es costosa porque, inicialmente este se activa mendiante una interrupcion, todos los nucleos del procesador deben detener lo que estan haciendo e invalidar sus caches, El nucleo inicializador debe esperar a que todos los demas nucleos confirmen que han invalidados todas sus caches. Despues de haberse ejecutado el shootdown, los procesadores pierden las direcciones que tenian almacenadas obligandolos a realizar de nuevo busquedas costosas en memoria principal, y el problema se agudiza en cuanto mas nucleos de procesamiento haya pues será mas dificil la coordinacion entre todos esto cuando se activa el shootdown
+
+### Explique la diferencia entre TLB gestionado por hardware (CISC/x86) y por software (RISC/MIPS). ¿Cu´al ofrece mayor flexibilidad al dise˜nador del SO y por qu´e?
+
+
+| Característica               | TLB gestionado por hardware                                        | TLB gestionado por software                             |
+| ---------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
+| Quién maneja el TLB miss     | El hardware (MMU/procesador)                                       | El sistema operativo                                    |
+| Intervención del SO          | Mínima                                                             | Alta                                                    |
+| Qué ocurre en un miss        | El hardware busca la traducción y actualiza el TLB automáticamente | Se genera una excepción y el kernel carga la traducción |
+| Velocidad                    | Más rápida                                                         | Más lenta                                               |
+| Overhead                     | Bajo                                                               | Mayor                                                   |
+| Complejidad del hardware     | Alta                                                               | Baja                                                    |
+| Flexibilidad                 | Menor                                                              | Mayor                                                   |
+| Cambio a modo kernel         | Generalmente no necesario                                          | Necesario en cada miss                                  |
+| Implementación de políticas  | Fija en hardware                                                   | Configurable por software                               |
+| Rendimiento en muchos misses | Mejor                                                              | Peor                                                    |
+| Ejemplos de arquitecturas    | x86, x86-64                                                        | MIPS                                                    |
+| Ventaja principal            | Mayor rendimiento                                                  | Mayor control y flexibilidad                            |
+| Desventaja principal         | Hardware costoso y complejo                                        | Mayor tiempo de atención del mis                        |
+
+
+Para el diseñador del Sistema Operativo la solucion de manejo por software es más flexible, pero en terminos de rendimiento es mas lenta. En las TLB administradas por hardware la intervención de systema operativo es casi nula es muy poca
