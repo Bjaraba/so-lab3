@@ -1,241 +1,307 @@
-# Laboratorio 3 Sistemas operativos 
+# Laboratorio 3 - Sistemas Operativos
 
 ## Punto 1: Espacio de direcciones
-Ejecución del programa
-![ejecucion del programa](/punto-1/images/program-execution.png)
 
-Mapa de memoria del proceso
-![mapa de memoria](/punto-1/images/data-map.png)
+### Ejecución del programa
 
+![Ejecución del programa](/punto-1/images/program-execution.png)
 
-Resumen de las regiones de datos
-![resumen](/punto-1/images/summary.png)
+### Mapa de memoria del proceso
 
-preguntas 
+![Mapa de memoria](/punto-1/images/data-map.png)
 
-### Identifique en la salida de `/proc/maps` las regiones text, heap y stack. ¿Qu´e permisos (r/w/x/p) tiene cada una? ¿Por qu´e difieren?
+### Resumen de las regiones de datos
 
-1. **Para el stack:** 
+![Resumen](/punto-1/images/summary.png)
 
-```
+## Preguntas
+
+### Identifique en la salida de `/proc/maps` las regiones `text`, `heap` y `stack`. ¿Qué permisos (`r/w/x/p`) tiene cada una? ¿Por qué difieren?
+
+1. **Stack**
+
+```text
 7ffcb72f7000-7ffcb7319000 rw-p 00000000 00:00 0                          [stack]
 ```
 
-se ve que tiene los permiso de leer y escribir pues este hace parte de la data que puede ser modficada y leida durante la ejecucion
+Se observa que tiene permisos de lectura y escritura (`rw`), ya que esta región almacena datos que pueden ser modificados durante la ejecución del programa, como variables locales y llamadas a funciones.
 
-2. **Para el heap:** 
-```
-7ffcb72f7000-7ffcb7319000 rw-p 00000000 00:00 0                          [stack]
-```
-tenemos los mismos permisos `r` y `w` para lectura y escritura porque estos datos necesitan ser leidos y modificados durante la ejecucion
+2. **Heap**
 
-3. **Para el text:**
-
+```text
+5c5d16eca000-5c5d16eeb000 rw-p 00000000 00:00 0                          [heap]
 ```
+
+El `heap` también posee permisos de lectura y escritura (`rw`) porque en esta región se almacena memoria dinámica que puede ser reservada y modificada en tiempo de ejecución mediante funciones como `malloc()`.
+
+3. **Text**
+
+```text
 00005c5ce3a5f000       4       4       0 r-x-- mem_map
 ```
 
-Este tiene permisos para lectura y ejecucion, pues el codigo debe tener permiso de ejecucion para poder ser ejecutado en el computador
+La región `text` tiene permisos de lectura y ejecución (`r-x`). Esto se debe a que allí se encuentra el código ejecutable del programa. No posee permisos de escritura por motivos de seguridad y estabilidad.
 
-### Compare las direcciones impresas con los rangos de `/proc/maps`. ¿A qu´e regi´on pertenece cada variable?
+---
 
-Direcciones de las variables: 
+### Compare las direcciones impresas con los rangos de `/proc/maps`. ¿A qué región pertenece cada variable?
 
-```
+Direcciones de las variables:
+
+```text
 Dir. global_var : 0x5c5ce3a62010
 Dir. local_var : 0x7ffcb7315c0c
 Dir. heap_var : 0x5c5d16eca2a0
 ```
 
-- `global_var: 0x5c5ce3a62010`: Esta variable esta dentro del rango de `00005c5ce3a62000       4       4       4 rw--- mem_map` que es una parte del codigo con permisos de ejecucion.  Muy probablemente la parte del `.data` donde se guardan las variables globales
+* `global_var: 0x5c5ce3a62010`
 
+  Esta variable se encuentra dentro del rango:
 
-- `local_var : 0x7ffcb7315c0c`: Esta varaible esta dentro de este rango `7ffcb72f7000-7ffcb7319000 rw-p 00000000 00:00 0                          [stack]` que esta reservado para el stack lo cual coincide con lo visto en clases *-las variables locales son alojadas en el stack-*
+  ```text
+  00005c5ce3a62000       4       4       4 rw--- mem_map
+  ```
 
-- `heap_var : 0x5c5d16eca2a0`: Esta variable esta dentro del rango `5c5d16eca000-5c5d16eeb000 rw-p 00000000 00:00 0                          [heap]` correspondiente al espacio del heap
+  Corresponde probablemente a la sección `.data`, donde se almacenan las variables globales.
 
+* `local_var : 0x7ffcb7315c0c`
 
-### ¿Qu´e otras regiones aparecen en el mapa `(libc, [vdso], [vsyscall])`? ¿Que funcioncumple cada una?
+  Esta variable está dentro del rango:
 
-Dentro del mapa se ven las otras regiones como las siguientes: 
+  ```text
+  7ffcb72f7000-7ffcb7319000 rw-p 00000000 00:00 0                          [stack]
+  ```
 
-- `libc.so.6`: la cual es la biblioteca estandar de `C` que es super importante en linux, donde estan utilidades como el `printf`, `scanf`, `malloc`, `free`, `strlen`, `strcpy`, `open`, `read`, `write` y otras. Este debe tener permisos de lectura y ejecucion para las partes del codigo.
+  Por lo tanto, pertenece al `stack`, lo cual coincide con el comportamiento esperado para las variables locales.
 
-- `ld-linux-x86-64.so.2`: Es un cargador dinamico. que carga las librerias de c antes de que la funcion `main()` se ejecutada, tambien resuelve simpbolos (enlaza las funciones) y prepara el proceso. En pocas palabras este hace posible el uso de las librerias dinamicas.
+* `heap_var : 0x5c5d16eca2a0`
 
-- `vvar`: es una region donde el kernel pone datos del sistema para que sean accesibles rapidamente. Como el timestamp acutal y la informacion del sistema. Basicamente es una zona de datos compartidos optimizada
+  Esta variable pertenece al rango:
 
-- `vdso`: Llamada Virtual Dynamic Shared Object, este permite que algunas de las llamadas al sistema se ejecuten si cambar al modo kernel, tales como `gettimeofday` o `clock_gettime`, esta diseñada para optimizar el rendimiento de estas llamadas a sistema.
+  ```text
+  5c5d16eca000-5c5d16eeb000 rw-p 00000000 00:00 0                          [heap]
+  ```
 
-### ¿Son las direcciones virtuales iguales a las fisicas? Explique apoyandose en el concepto de address space del OSTEP.
+  Por lo tanto, corresponde a memoria dinámica alojada en el `heap`.
 
-No, el libro OSTEP dice que la memoria virtual es una abstraccion de la memoria, no la memoria fisica en si. Pues cada programa tiene una vista limitada de la memoria que es llamada el `address space` y esta es limitada, el programa no puede ver todo el espacio de memoria fisica.
+---
 
-### Ejecucion de dos instancias del programa al mismo tiempo 
-![ejecucion de dos instancias](/punto-1/images/two-instaces.png)
+### ¿Qué otras regiones aparecen en el mapa (`libc`, `[vdso]`, `[vsyscall]`)? ¿Qué función cumple cada una?
 
+Dentro del mapa también aparecen las siguientes regiones:
 
-### ¿Son las mismas direcciones virtuales en ambos procesos? ¿Qu´e conclusi´on saca sobre el aislamiento del espacio de direcciones?
+* `libc.so.6`
 
-En mi caso las direcciones son diferentes y no se translapan. A pesar de que estas direcciones hagan referencia a direcciones virtuales se puede ver que el sistema separa y se encarga de la seguridad de los datos cuando se ejecutan dos programas.
+  Es la biblioteca estándar de C en Linux. Contiene funciones fundamentales como `printf`, `scanf`, `malloc`, `free`, `strlen`, `open`, `read` y `write`. Generalmente posee permisos de lectura y ejecución.
 
-### ¿Podr´ıa el Proceso A leer o modificar la variable global del Proceso B mediante su direcci´on virtual? Justifique.
+* `ld-linux-x86-64.so.2`
 
-No, porque las direcciones virutales se mapean de forma diferente a la memoria fisica para cada uno de los procesos. Por eso, si dos procesos tienen la misma direccion virtual, esta correspondera a direcciones diferentes en la memoria fisica. Asi que es imposible que un proceso modifique la data de otro proceso.
+  Es el cargador dinámico del sistema. Se encarga de cargar las bibliotecas compartidas antes de ejecutar `main()`, resolver símbolos y preparar el proceso.
 
-## Punto 2: Api de memoria
+* `vvar`
 
-![ejecucion de los comandos](/punto-2/images/execution.png)
+  Es una región utilizada por el kernel para compartir información del sistema de forma eficiente, como datos de tiempo y estadísticas.
 
-### Muestre la salida completa de Valgrind. ¿Reporta errores o fugas de memoria? ¿Que significa el mensaje "All heap blocks were freed"?
+* `vdso`
 
-```
+  Significa *Virtual Dynamic Shared Object*. Permite ejecutar ciertas llamadas al sistema sin cambiar al modo kernel, como `gettimeofday()` o `clock_gettime()`, mejorando el rendimiento.
+
+---
+
+### ¿Son las direcciones virtuales iguales a las físicas? Explique apoyándose en el concepto de *address space* del OSTEP.
+
+No. Según OSTEP, la memoria virtual es una abstracción de la memoria física. Cada proceso posee su propio *address space* o espacio de direcciones virtuales, aislado de los demás procesos.
+
+Las direcciones virtuales deben ser traducidas a direcciones físicas mediante la MMU y las tablas de páginas. Gracias a esto, cada proceso tiene la impresión de poseer toda la memoria para sí mismo.
+
+---
+
+### Ejecución de dos instancias del programa al mismo tiempo
+
+![Ejecución de dos instancias](/punto-1/images/two-instaces.png)
+
+### ¿Son las mismas direcciones virtuales en ambos procesos? ¿Qué conclusión saca sobre el aislamiento del espacio de direcciones?
+
+En este caso, las direcciones virtuales son diferentes y no se traslapan. Esto demuestra que el sistema operativo mantiene aislado el espacio de direcciones de cada proceso, garantizando seguridad y evitando que un proceso interfiera con otro.
+
+---
+
+### ¿Podría el Proceso A leer o modificar la variable global del Proceso B mediante su dirección virtual? Justifique.
+
+No. Las direcciones virtuales se traducen de manera independiente para cada proceso. Aunque dos procesos puedan utilizar direcciones virtuales similares, estas apuntarán a ubicaciones físicas diferentes.
+
+Por esta razón, un proceso no puede acceder directamente a la memoria privada de otro proceso.
+
+---
+
+# Punto 2: API de memoria
+
+![Ejecución de los comandos](/punto-2/images/execution.png)
+
+### Muestre la salida completa de Valgrind. ¿Reporta errores o fugas de memoria? ¿Qué significa el mensaje "All heap blocks were freed"?
+
+```text
 valgrind --leak-check=full --track-origins=yes ./heap_demo
 ==16454== Memcheck, a memory error detector
 ==16454== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
 ==16454== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
 ==16454== Command: ./heap_demo
-==16454== 
-Arreglo original: 0 1 4 9 16 25 36 49 64 81 
-Arreglo ampliado: 0 1 4 9 16 25 36 49 64 81 100 121 144 169 196 225 256 289 324 361 
-==16454== 
+==16454==
+Arreglo original: 0 1 4 9 16 25 36 49 64 81
+Arreglo ampliado: 0 1 4 9 16 25 36 49 64 81 100 121 144 169 196 225 256 289 324 361
+==16454==
 ==16454== HEAP SUMMARY:
 ==16454==     in use at exit: 0 bytes in 0 blocks
 ==16454==   total heap usage: 3 allocs, 3 frees, 1,144 bytes allocated
-==16454== 
+==16454==
 ==16454== All heap blocks were freed -- no leaks are possible
-==16454== 
+==16454==
 ==16454== For lists of detected and suppressed errors, rerun with: -s
 ==16454== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
 ```
-Al paracer no hubo fugas de memoria pues hubo 3 allocaciones y 3 liberaciones. Y ademas el mensaje `All heap blocks were freed` significa que toda la memoria dinamica que fue reservada fue liberada por el programa. Asi no hay problemas de fuga de memoria. 
 
-## ¿Por que se usa sizeof(int) en lugar del valor literal 4? ¿Que ventaja ofrece en portabilidad entre arquitecturas?
+No se reportan fugas de memoria ni errores. Hubo 3 asignaciones y 3 liberaciones de memoria.
 
-Pues aunque en la mayoria de los computadores el valor del tamaño del `int` es $4$, pero no es garantia que en todos los casos se igual. Pues en segun la arquitectura, compilador o sistema operativo esto puede cambiar, algunos pueden pasar de $2 bytes$ o en algunos casos estraños $8 \text{ bytes}$. Usar la funcion `sizeof()` garantia la portabilidad entre arquitecturas y la gran ventaja esta en poder ejecutar el mismo codigo en diferentes plataformas sin necesidad de que haya una version diferente dependiendo de la plataforma.
+El mensaje:
 
-### ¿Qu´e devuelve malloc Cu´ando no hay memoria disponible? ¿Por qu´e es critico verificar ese valor antes de usarlo?
-
-Cuando no hay espacio en el heap disponible y se hace un llamado a la funcion `malloc()` esta devolvera un puntero con valor `null`. En caso de que este no sea verificado, el programa cuando intente acceder a la informacion alojada en este puntero se disparará un fallo de segmentacion -`segmentation fault`-, lo que ocacionara que el programa pare innesperadamente. 
-
-
-Ejecuion del codigo `buggy_mem.c`
-
+```text
+All heap blocks were freed -- no leaks are possible
 ```
+
+indica que toda la memoria dinámica reservada fue correctamente liberada.
+
+---
+
+### ¿Por qué se usa `sizeof(int)` en lugar del valor literal `4`? ¿Qué ventaja ofrece en portabilidad entre arquitecturas?
+
+Aunque en muchas arquitecturas un `int` ocupa 4 bytes, esto no está garantizado en todos los sistemas.
+
+El uso de `sizeof(int)` permite que el programa funcione correctamente independientemente de la arquitectura, compilador o sistema operativo.
+
+Esto mejora la portabilidad y evita errores relacionados con tamaños de datos distintos.
+
+---
+
+### ¿Qué devuelve `malloc()` cuando no hay memoria disponible? ¿Por qué es crítico verificar ese valor antes de usarlo?
+
+Cuando no hay memoria disponible, `malloc()` devuelve `NULL`.
+
+Si el programa no verifica este valor e intenta acceder a la memoria apuntada por el puntero, se producirá un fallo de segmentación (*segmentation fault*).
+
+Por ello, siempre es importante validar el resultado de `malloc()` antes de utilizar el puntero.
+
+---
+
+## Ejecución del código `buggy_mem.c`
+
+```text
 brayan@DESKTOP-RKQPITI:/mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2$ valgrind --leak-check=full --track-origins=yes ./buggy_mem
 ==3375== Memcheck, a memory error detector
-==3375== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
-==3375== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
-==3375== Command: ./buggy_mem
-==3375== 
-==3375== Invalid write of size 4
-==3375==    at 0x1091E3: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375==  Address 0x4a75054 is 0 bytes after a block of size 20 alloc'd
-==3375==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3375==    by 0x1091BE: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375== 
-hola mundo
-==3375== Invalid read of size 4
-==3375==    at 0x109231: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375==  Address 0x4a75040 is 0 bytes inside a block of size 20 free'd
-==3375==    at 0x484988F: free (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3375==    by 0x10922C: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375==  Block was alloc'd at
-==3375==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3375==    by 0x1091BE: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375== 
-p[0] = 0
-==3375== 
-==3375== HEAP SUMMARY:
-==3375==     in use at exit: 100 bytes in 1 blocks
-==3375==   total heap usage: 3 allocs, 2 frees, 1,144 bytes allocated
-==3375== 
-==3375== 100 bytes in 1 blocks are definitely lost in loss record 1 of 1
-==3375==    at 0x4846828: malloc (in /usr/libexec/valgrind/vgpreload_memcheck-amd64-linux.so)
-==3375==    by 0x1091F8: main (in /mnt/c/Users/brayan/Documents/udea/2026-1/sistemas-operativos/so-lab3/punto-2/buggy_mem)
-==3375== 
-==3375== LEAK SUMMARY:
-==3375==    definitely lost: 100 bytes in 1 blocks
-==3375==    indirectly lost: 0 bytes in 0 blocks
-==3375==      possibly lost: 0 bytes in 0 blocks
-==3375==    still reachable: 0 bytes in 0 blocks
-==3375==         suppressed: 0 bytes in 0 blocks
-==3375== 
-==3375== For lists of detected and suppressed errors, rerun with: -s
-==3375== ERROR SUMMARY: 3 errors from 3 contexts (suppressed: 0 from 0)
+...
 ```
 
-### Transcriba los mensajes que arroja Valgrind. ¿Cu´al mensaje corresponde a cada uno de los tres errores cl´asicos?
+---
 
-1. `buffer overflow`: Ese error ocurre cuando un programa intenta escribir mas del espaci reservado por el puntero. y el mesnaje que manda valgrind cuando esete error es detecatado es estse 
-```
+### Transcriba los mensajes que arroja Valgrind. ¿Cuál mensaje corresponde a cada uno de los tres errores clásicos?
+
+1. **Buffer overflow**
+
+Ocurre cuando un programa escribe más allá del espacio reservado.
+
+Mensaje:
+
+```text
 Invalid write of size 4
 ```
 
-2. `memory leak`: Este error ocurre cuando el programa reserva memoria y la uitiliza pero despues no la libera para que el sistema puede vovler a utilizarla. Esto causa problemas de rendimiento. Acontinuacion el mensaje de error de valgrind
+2. **Memory leak**
 
-```
-==3375== LEAK SUMMARY:
-==3375==    definitely lost: 100 bytes in 1 blocks
-==3375==    indirectly lost: 0 bytes in 0 blocks
-==3375==      possibly lost: 0 bytes in 0 blocks
-==3375==    still reachable: 0 bytes in 0 blocks
-==3375==         suppressed: 0 bytes in 0 blocks
+Ocurre cuando el programa reserva memoria y nunca la libera.
+
+Mensaje:
+
+```text
+LEAK SUMMARY:
+definitely lost: 100 bytes in 1 blocks
 ```
 
-3. `use after free`: Este error ocurre cuando un programa continua utilizando un putero despues de que la direccion de memoria a la que apuntaba haya sido liberada. Y el mensaje que manda valgrind es el siguiente.
+3. **Use after free**
 
-```
+Ocurre cuando un programa utiliza memoria después de haber sido liberada.
+
+Mensaje:
+
+```text
 Invalid read of size 4
 ```
 
-### Corrija el programa (buggy mem fixed.c) y verifique con Valgrind que no queda ning´un error ni fuga.
+---
 
-Codigo corregido
-```{c}
+### Corrija el programa (`buggy_mem_fixed.c`) y verifique con Valgrind que no queda ningún error ni fuga.
+
+## Código corregido
+
+```c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 int main()
 {
+    int *p = malloc(5 * sizeof(int));
 
-  int *p = malloc(5 * sizeof(int));
-  for (int i = 0; i < 5; i++)
-    p[i] = i;
+    for (int i = 0; i < 5; i++)
+        p[i] = i;
 
-  char *q = malloc(100);
-  strcpy(q, "hola mundo");
-  printf("%s\n", q);
-  printf("p[0] = %d\n", p[0]);
-  free(q);
-  free(p);
-  return 0;
+    char *q = malloc(100);
+
+    strcpy(q, "hola mundo");
+
+    printf("%s\n", q);
+    printf("p[0] = %d\n", p[0]);
+
+    free(q);
+    free(p);
+
+    return 0;
 }
-``` 
-Demostracion de que no hay errores con valgrind
+```
 
-![comprobacion con valgrind](/punto-2/images/valgrind.png)
+### Comprobación con Valgrind
 
+![Comprobación con Valgrind](/punto-2/images/valgrind.png)
 
-### ¿Qu´e consecuencias puede tener un use-after-free en un programa real en t´erminos de seguridad y estabilidad del sistema?
+---
 
-Cuando ocurre un use affter free se crea un `dangling pointer` que es un puntero que contiene una direccion de memoria que ya ha sido liberada o esta fuera de alcance. Los atacantes pueden utilizar esta vulnerabilidad para: 
-- **Ejecucion de codigo arbirtrario:** los atacantes reemplazan la data original con codigo malicioso, el cual va a ser ejecutado por la aplicacion cuando haga referencia al `dalgling pointer`
- - **Corrupcion de datos y fuga de datos:** los atacantes pueden leer informacion que luego sera alojada en la direccion de este puntero colgante.
+### ¿Qué consecuencias puede tener un *use-after-free* en un programa real en términos de seguridad y estabilidad?
 
-## Punto 3: Traduccion de direcciones.
+Un *use-after-free* genera un *dangling pointer*, es decir, un puntero que apunta a memoria ya liberada.
 
+Esto puede provocar:
 
-###  Compile y ejecute. Muestre la salida completa. ¿Que ocurre al acceder a VA=64 y VA=100 en el Proceso A? ¿Que haria el SO real ante esta excepcion?
-![ejecucion del programa base bounds](/punto-3/images/execution.png)
+* Ejecución de código arbitrario.
+* Corrupción de datos.
+* Fugas de información.
+* Caídas inesperadas del programa.
+* Vulnerabilidades de seguridad explotables por atacantes.
 
-El proceso A define el registro bunds como 64 asi que todas las direcciones virtuales se mapearan desde la 0 hasta la 63. Y las direcciones 64 y 100 estan fuera del rango. El sistema operativo en este caso debera enviar un `segmentation fault` pues el proceso esta intentando acceder a una direccion de memoria que no le pertenece.
+---
 
-### Agregue un Proceso C (base=0, bounds=32) al programa y traduzca las mismas VAs. ¿Puede el Proceso A acceder a las direcciones del Proceso C directamente? Justifique.
+# Punto 3: Traducción de direcciones
 
-Codigo agregando el proceso C
-```{c}
+### Compile y ejecute. Muestre la salida completa. ¿Qué ocurre al acceder a `VA=64` y `VA=100` en el Proceso A? ¿Qué haría el SO real ante esta excepción?
+
+![Ejecución del programa base bounds](/punto-3/images/execution.png)
+
+El proceso A define el registro `bounds` como 64, por lo que únicamente son válidas las direcciones virtuales entre `0` y `63`.
+
+Las direcciones `64` y `100` están fuera del rango permitido. En un sistema operativo real, esto produciría un `segmentation fault`.
+
+---
+
+### Agregue un Proceso C (`base=0`, `bounds=32`) al programa y traduzca las mismas VAs. ¿Puede el Proceso A acceder a las direcciones del Proceso C directamente? Justifique.
+
+```c
 // base_bounds.c
 #include <stdio.h>
 
@@ -295,96 +361,122 @@ int main()
 }
 ```
 
-Ejecucion del script con el añadiendo el proceso C 
-![ejecucion con el proceso c](/punto-3/images/process_c_execution.png)
+![Ejecución con el proceso C](/punto-3/images/process_c_execution.png)
 
-En la imagen se ve que las direcciones tal que 
+Las direcciones mayores o iguales a `32` generan una excepción porque exceden el valor de `bounds`.
 
-$$ \text{direction} \geq 32 $$
+El Proceso A no puede acceder directamente a las direcciones del Proceso C, ya que ambos poseen espacios de direcciones aislados.
 
-mandarán una exepcion pues estas sobrepasan el limite del registro `bounds`.
+* **Proceso A:** `base=32`, `bounds=64` → rango físico `[32, 95]`
+* **Proceso C:** `base=0`, `bounds=32` → rango físico `[0, 31]`
 
-Ahora ¿Puede el proceso A acceder a las direcciones de C directamente? La respuesta corta es no. Segun el base and bounds, las direecciones se mapean a la memoria fisica tal que todas las direcciones son contiguas.
+Los rangos no se traslapan, por lo que el aislamiento de memoria se mantiene.
 
-- **Proceso A**: $base=32, bounds=64$, si mapeamos a la memoria fisica, la memoria del proceso A iniciaria en el registro 32 y se cuentan 64 incluyendo el 32 hacia adelante. asi que el rango que este proceso tendria seria: $[32, 95]$
+---
 
-- **Proceso C**: $base=0, bounds=32$, haciendo lo mismo que con el proceso A, el rango de direcciones del proceso C en la memoria fisica es: $[0, 31]$
+### ¿Cuál es la limitación principal del esquema *base & bounds* que motiva el surgimiento de la segmentación?
 
-Como se ve en los rangos no se translapan ni se crusan, por esta razon el proces A es incapas de acceder a los datos que estan en el proceso C.
+La principal limitación es la fragmentación interna.
 
-### ¿Cuál es la limitacion principal del esquema base & bounds que motiva el surgimiento de la segmentacion?
+El sistema reserva bloques contiguos de memoria para cada proceso, lo que puede desperdiciar espacio cuando el proceso no utiliza completamente la memoria asignada.
 
-El prinicipal problema del base and bounds, es la **fragmentacion interna** que es la perdida de memoria en por la parte no usada de memoria cuando se asignan particiones con tamaños fijos, para todo el bloque de memoria que usará un proceso
+---
 
+# Punto 7: TLB (*Translation Lookaside Buffer*)
 
+## Ejecución del código durante 3 veces
 
+![Ejecución del código 3 veces](/punto-7/images/3-execution.png)
 
+### ¿Cuántas veces más lento es el acceso aleatorio frente al secuencial? Muestre el promedio de 3 ejecuciones.
 
-## Punto 7: TLB (translation lookaside buffer)
+* Acceso secuencial: `[13.53, 18.73, 19.38] ms`
+* Acceso aleatorio: `[41.01, 57.59, 42.92] ms`
 
-Ejecucion del codigo durante 3 veces 
+Promedio secuencial:
 
-![ejecucion del codigo 3 veces](/punto-7/images/3-execution.png)
+```math
+\frac{51.64}{3} \approx 17.213
+```
 
-### ¿Cu´antas veces mas lento es el acceso aleatorio frente al secuencial? Muestre el promedio de 3 ejecuciones de tlb locality.
+Promedio aleatorio:
 
-$\text{acceso secuencial} $= $[13.53, 18.73, 19.38]ms$
+```math
+\frac{141.52}{3} \approx 47.173
+```
 
-$\text{acceso aleatorio} = [41.01, 57.59, 42.92]ms$
+Porcentaje de diferencia:
 
+```math
+\frac{47.173 - 17.213}{17.213} \times 100\% \approx 174\%
+```
 
-$$
-Avg(\text{acceso secuencial}) = \frac{51.64}{3} \approx 17.213
-$$
+El acceso aleatorio es aproximadamente un `174 %` más lento que el acceso secuencial.
 
-$$
-Avg(\text{acceso aleatorio}) = \frac{141.52}{3} \approx 47.173
-$$
+---
 
-¿En que porcentaje es mas lento el acceso aleatorio?
+### Explique con el modelo del TLB por qué el acceso aleatorio es más lento. ¿Qué ocurre con el *hit rate* en cada caso?
 
-$$
-\text{Porcentaje} = \frac{47.173 - 17.213}{17.213} \times 100\% \approx 174\%
-$$
+En el acceso secuencial, los datos suelen encontrarse en páginas cercanas entre sí. Esto favorece la localidad espacial y aumenta la probabilidad de que las traducciones ya estén almacenadas en el TLB.
 
-EL acceso aleatorio es un $174\%$ mas lento que el acceso secuencial
+Por esta razón, el *hit rate* es alto.
 
-### Explique con el modelo del TLB por qu´e el acceso aleatorio es mas lento. ¿Qu´e ocurre con el hit rate en cada caso?
+En cambio, en el acceso aleatorio las referencias a memoria están dispersas, lo que incrementa los fallos de TLB (*TLB misses*). Como consecuencia, el procesador debe consultar con mayor frecuencia las tablas de páginas en memoria principal, aumentando el tiempo de acceso.
 
-Porque el sistema trae la informacion en bloques, asi que es muy probable que si leo un indice en un array, cuando lea el que esta justamente despues tambien este dentro del bloque de la memoria que se guarda en cache, provocando un `hit`, ahorrandome la necesidad de ir a la memoria principal para leer el indice. A diferencia del aleatorio, pues es como los accesos no son necesariamente contiguos es menos probable que la informacion este dentro de un bloque que este en la memoria cache, eso hace que haya un `miss` provocando mas lentitud en la carga de datos. De esta forma vemos que cuando el acceso a memoria es aleatorio se tiene una tasa de `hits` mas baja
+---
 
-###  Si el tamaño de pagina fuera 64 KB en lugar de 4 KB, ¿mejorar´ıa o empeorar´ıa la situaci´on con accesos aleatorios? Justifique desde el punto de vista del TLB y del uso de memoria.
+### Si el tamaño de página fuera 64 KB en lugar de 4 KB, ¿mejoraría o empeoraría la situación con accesos aleatorios?
 
-Desde un punto de vista de la TLB el hit rate deberia mejorar porque teniendo bloques mas grandes hay mas probabilidad de que un dato aleatorio este dentro de aquel bloque. Pero esta mejora puede que no sea significativa, pues la cantidad de espacios en memoria, es demasiado grande comparado con lo que puede almacenar la TLB.
+Desde el punto de vista del TLB, un tamaño de página mayor podría mejorar ligeramente el *hit rate*, ya que cada entrada cubriría una región más amplia de memoria.
 
-### Un TLB con 64 entradas (fully associative) y paginas de 4 KB. ¿Cuanta memoria puede cubrir sin generar misses? ¿Es suficiente para un proceso moderno t´ıpico?
+Sin embargo, también aumentaría el desperdicio de memoria por fragmentación interna.
 
-Puede cubrir $64$ entradas de $4 KB$ cada una es decir unos $256KB$. Lo cual con los procesadores actuales es muy generoso pues los procesdores intel de $14^a$ - $16^a$ generacion tienen unas tablas de mas o menos $100KB$ por nucleo. Eso si estas tienen diferentes niveles de cache, las mas rapidas tienen entradas muy pequeñas hasta de $8 \text{ bytes}$ para favorecer la velocidad.
+Además, si los accesos aleatorios siguen siendo muy dispersos, la mejora en el rendimiento podría no ser significativa.
 
-### Consulte: ¿Qu´e es un TLB shootdown y en que situaci´on ocurre en sistemas multiprocesador? ¿Por qu´e es una operaci´on costosa?
+---
 
-Un TLB shootdown es un mecanismo de software utilizado en sistemas multiprocesador donde un procesador (CPU) obliga a otros procesadores a invalidar (vaciar) sus memorias caché de traducción de direcciones virtuales a físicas (TLB - Translation Lookaside Buffer). Este proceso es necesario para mantener la consistencia de la memoria cuando el sistema operativo cambia la tabla de páginas, por ejemplo, al liberar o mover memoria
+### Un TLB con 64 entradas (*fully associative*) y páginas de 4 KB. ¿Cuánta memoria puede cubrir sin generar *misses*? ¿Es suficiente para un proceso moderno típico?
 
-Es costosa porque, inicialmente este se activa mendiante una interrupcion, todos los nucleos del procesador deben detener lo que estan haciendo e invalidar sus caches, El nucleo inicializador debe esperar a que todos los demas nucleos confirmen que han invalidados todas sus caches. Despues de haberse ejecutado el shootdown, los procesadores pierden las direcciones que tenian almacenadas obligandolos a realizar de nuevo busquedas costosas en memoria principal, y el problema se agudiza en cuanto mas nucleos de procesamiento haya pues será mas dificil la coordinacion entre todos esto cuando se activa el shootdown
+La cobertura total sería:
 
-### Explique la diferencia entre TLB gestionado por hardware (CISC/x86) y por software (RISC/MIPS). ¿Cu´al ofrece mayor flexibilidad al dise˜nador del SO y por qu´e?
+```math
+64 \times 4\text{ KB} = 256\text{ KB}
+```
 
+Por lo tanto, el TLB puede cubrir hasta `256 KB` de memoria sin generar fallos.
 
-| Característica               | TLB gestionado por hardware                                        | TLB gestionado por software                             |
-| ---------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------- |
-| Quién maneja el TLB miss     | El hardware (MMU/procesador)                                       | El sistema operativo                                    |
-| Intervención del SO          | Mínima                                                             | Alta                                                    |
-| Qué ocurre en un miss        | El hardware busca la traducción y actualiza el TLB automáticamente | Se genera una excepción y el kernel carga la traducción |
-| Velocidad                    | Más rápida                                                         | Más lenta                                               |
-| Overhead                     | Bajo                                                               | Mayor                                                   |
-| Complejidad del hardware     | Alta                                                               | Baja                                                    |
-| Flexibilidad                 | Menor                                                              | Mayor                                                   |
-| Cambio a modo kernel         | Generalmente no necesario                                          | Necesario en cada miss                                  |
-| Implementación de políticas  | Fija en hardware                                                   | Configurable por software                               |
-| Rendimiento en muchos misses | Mejor                                                              | Peor                                                    |
-| Ejemplos de arquitecturas    | x86, x86-64                                                        | MIPS                                                    |
-| Ventaja principal            | Mayor rendimiento                                                  | Mayor control y flexibilidad                            |
-| Desventaja principal         | Hardware costoso y complejo                                        | Mayor tiempo de atención del mis                        |
+Para programas modernos, esta cantidad suele ser insuficiente, ya que las aplicaciones actuales utilizan varios megabytes o incluso gigabytes de memoria.
 
+---
 
-Para el diseñador del Sistema Operativo la solucion de manejo por software es más flexible, pero en terminos de rendimiento es mas lenta. En las TLB administradas por hardware la intervención de systema operativo es casi nula es muy poca
+### ¿Qué es un *TLB shootdown* y en qué situación ocurre en sistemas multiprocesador? ¿Por qué es una operación costosa?
+
+Un *TLB shootdown* es un mecanismo mediante el cual un procesador obliga a otros procesadores a invalidar entradas de sus TLB.
+
+Esto ocurre cuando el sistema operativo modifica las tablas de páginas y necesita garantizar consistencia entre todos los núcleos.
+
+Es costoso porque:
+
+* Requiere interrupciones entre procesadores.
+* Obliga a sincronizar múltiples núcleos.
+* Los núcleos deben detener temporalmente su ejecución.
+* Se pierden entradas del TLB, aumentando futuros accesos a memoria.
+
+---
+
+### Explique la diferencia entre un TLB gestionado por hardware (CISC/x86) y uno gestionado por software (RISC/MIPS). ¿Cuál ofrece mayor flexibilidad al diseñador del SO y por qué?
+
+| Característica           | TLB gestionado por hardware | TLB gestionado por software |
+| ------------------------ | --------------------------- | --------------------------- |
+| Manejo de TLB miss       | Hardware                    | Sistema operativo           |
+| Intervención del SO      | Mínima                      | Alta                        |
+| Atención de fallos       | Automática                  | Mediante excepción          |
+| Rendimiento              | Mayor                       | Menor                       |
+| Complejidad del hardware | Alta                        | Baja                        |
+| Flexibilidad             | Menor                       | Mayor                       |
+| Cambio a modo kernel     | Generalmente no necesario   | Necesario                   |
+| Ejemplos                 | x86, x86-64                 | MIPS                        |
+
+El TLB gestionado por software ofrece mayor flexibilidad al diseñador del sistema operativo, ya que el kernel puede implementar distintas políticas de reemplazo y manejo de memoria.
+
+Sin embargo, esta flexibilidad tiene el costo de un mayor tiempo de atención ante los *TLB misses*.
