@@ -1,5 +1,18 @@
 # Laboratorio 3 - Sistemas Operativos
 
+Integrantes
+Kelly Julieth Arango Henao
+
+kjulieth.arangoh@udea.edu.co
+
+1036657098
+
+Brayan Stiven Jaraba Alvarez
+
+b.jaraba@udea.edu.co
+
+1032178608
+
 ## Punto 1: Espacio de direcciones
 
 ### Ejecución del programa
