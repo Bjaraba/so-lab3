@@ -764,9 +764,10 @@ Esto sucede típicamente en un slab allocator, porque este sistema trabaja con b
 
 **6.2 Actividad: Fragmentación**
 
-<img width="463" height="151" alt="image" src="https://github.com/user-attachments/assets/108a78f8-07d2-4e30-9313-f70c872d9c46" />
+[Ver programa fragmentacion](https://github.com/Bjaraba/so-lab3/blob/main/punto-6/fragmentation.c)
 
-[Ver programa fragmentacion](https://github.com/Bjaraba/so-lab3/blob/main/punto-6/fragmentation.c))
+
+<img width="463" height="151" alt="image" src="https://github.com/user-attachments/assets/108a78f8-07d2-4e30-9313-f70c872d9c46" />
 
 **1.¿Son consecutivas en memoria las direcciones asignadas? ¿Qué patrón de separación observa entre bloques contiguos?**
 
