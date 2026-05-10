@@ -401,8 +401,11 @@ El sistema reserva bloques contiguos de memoria para cada proceso, lo que puede 
 **VA = 0x03A0** 
 -----
 Selector: 00  Code
+
 Offset: 0x3A0=(3×256)+(10×16)+0=928
+
 Tamaño Code: 2KB=2×1024=2048
+
 928<2048   válido
 
 Calcular PA:
@@ -415,8 +418,11 @@ PA 0x43A0
 **VA = 0x1800**
 -----
 Selector: 01 Heap
+
 Offset: 0x800=(8×256)+0+0=2048
+
 Tamaño Heap: 3KB=3×1024=3072
+
 2048<3072 válido
 
 Calcular PA:
@@ -428,8 +434,11 @@ PA 0x6800
 **VA = 0x3C00**
 -----
 Selector:11 Stack 
+
 Offset:0xC00=3072  
+
 Tamaño Stack: 2KB= 2x1024=2048
+
 3072>2048  no válido
 
 EXCEPCIÓN (segmentation fault)
@@ -437,8 +446,11 @@ EXCEPCIÓN (segmentation fault)
 **VA = 0x0C00**
 -----
 Selector: 00 Code
+
 Offset: 0xC00=(12×256)+0+0=3072 
+
 Tamaño Code: 2KB= 2x1024=2048
+
 3072>2048  no válido
 
 EXCEPCIÓN 
@@ -446,7 +458,9 @@ EXCEPCIÓN
 **VA = 0x2200** 
 -----
 Selector: 10 
+
 Offset: 0x200=512 
+
 Segmento no definido
 
 EXCEPCIÓN 
