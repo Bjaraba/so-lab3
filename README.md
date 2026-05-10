@@ -587,6 +587,185 @@ En cambio, en la segmentación los segmentos tienen tamaños variables, lo que p
 
 La paginación reduce este problema porque trabaja con bloques de tamaño fijo. Sin embargo, puede producir fragmentación interna, ya que una página puede no utilizar completamente el espacio del frame asignado.
 
+# Punto 6:  Gestión de espacio libre
+
+**6.1 Actividad: Simulación de estrategias de asignación**
+
+First Fit selecciona el primer bloque libre que sea suficientemente grande.
+
+Solicitud 1: malloc(212)
+
+100 → no cabe
+500 → sí cabe
+
+Se asigna el bloque de 500 bytes.
+
+Espacio restante: 500−212=288
+
+Lista libre:
+
+Dirección	Tamaño
+0x0100	   100
+0x02D4	   288
+0x0400	   200
+0x0500	   300
+0x0700	   600
+---
+Solicitud 2: malloc(417)
+
+100 → no cabe
+288 → no cabe
+200 → no cabe
+300 → no cabe
+600 → sí cabe
+
+Se asigna el bloque de 600 bytes.
+
+Espacio restante: 600−417=183
+
+Lista libre:
+
+Dirección	Tamaño
+0x0100	   100
+0x02D4     288
+0x0400	   200
+0x0500	   300
+0x08A1	   183
+----
+
+Solicitud 3: malloc(98)
+100 → sí cabe
+
+Espacio restante: 100−98=2
+
+Lista libre:
+
+Dirección 	Tamaño
+0x0162      	2
+0x02D4      	288
+0x0400      	200
+0x0500	      300
+0x08A1	      183
+---
+
+Solicitud 4: malloc(426)
+
+2 → no cabe
+288 → no cabe
+200 → no cabe
+300 → no cabe
+183 → no cabe
+
+Resultado:
+
+FALLO DE ASIGNACIÓN
+Lista libre final con First Fit
+
+Dirección	Tamaño
+0x0162	   2
+0x02D4	   288
+0x0400	   200
+0x0500	   300
+0x08A1	   183
+---
+
+
+**2. Repita con best fit. ¿Cambia el resultado?**
+
+Best Fit selecciona el bloque más pequeño posible que pueda satisfacer la solicitud.
+
+malloc(212)
+
+Bloques posibles:
+
+500
+300
+600
+
+El más ajustado es: 300 bytes
+
+Resto: 300−212=88
+---
+
+malloc(417)
+
+Bloques posibles:
+
+500
+600
+
+El mejor ajuste es: 500 bytes
+
+Resto: 500−417=83
+---
+
+malloc(98)
+
+Bloques posibles:
+
+100
+200
+600
+
+El mejor ajuste es: 100 bytes
+
+Resto: 100−98=2
+---
+
+malloc(426)
+
+Solo queda disponible: 600 bytes
+
+Resto: 600−426=174
+
+
+Resultado con Best Fit
+
+Todas las solicitudes pueden asignarse correctamente.
+
+Lista libre final:
+
+Dirección	     Tamaño
+bloque restante	2
+bloque restante	83
+bloque restante	200
+bloque restante	88
+bloque restante	174
+
+Si cambia el resultado, ya que con First Fit la última asignación falla porque el bloque grande de 600 bytes ya había sido fragmentado antes. Con Best Fit las solicitudes se distribuyen mejor y todas pueden satisfacerse.
+
+**3. ¿Cuál estrategia genera mas fragmentación externa en este caso? ¿Cuál la minimiza?**
+
+En este caso, la estrategia que genera más fragmentación externa es First Fit, porque asigna el primer bloque disponible que encuentre, sin buscar el más adecuado. Esto hace que queden espacios libres pequeños y dispersos que después son difíciles de reutilizar.
+
+La estrategia que minimiza la fragmentación externa es Best Fit, ya que busca el bloque más pequeño posible que pueda satisfacer la solicitud. De esta forma se aprovecha mejor el espacio disponible y se evita desperdiciar bloques grandes innecesariamente.
+
+**4. ¿Qué es el coalescing? Ilustre un caso donde su ausencia provoca que una solicitud de 250 bytes falle aunque haya suficiente memoria total libre.**
+
+El coalescing es el proceso de unir bloques libres contiguos para formar un bloque más grande. Esto ayuda a reducir la fragmentación externa y mejorar el aprovechamiento de la memoria.
+
+Por ejemplo, si existen tres bloques libres consecutivos de:
+
+100 bytes
+100 bytes
+100 bytes
+
+la memoria libre total sería de 300 bytes. Sin embargo, si no se realiza coalescing, una solicitud de malloc(250) fallaría porque no existe un único bloque continuo de 250 bytes, aunque la suma total de memoria libre sí sea suficiente.
+
+Si se aplica coalescing, los tres bloques se unen formando un bloque de 300 bytes y la solicitud podría realizarse correctamente.
+
+**5. ¿Qué es la fragmentación interna? ¿Cuándo aparece tipicamente al usar un slab allocator?
+
+La fragmentación interna ocurre cuando se asigna un bloque de memoria más grande de lo que realmente necesita el programa, dejando espacio desperdiciado dentro del bloque asignado.
+
+Esto sucede típicamente en un slab allocator, porque este sistema trabaja con bloques de tamaños fijos. Por ejemplo, si un proceso necesita 50 bytes y el slab allocator solo dispone de bloques de 64 bytes, se asigna el bloque completo y quedan 14 bytes sin utilizar dentro de ese espacio. Aunque el programa no use esos bytes, tampoco pueden ser aprovechados por otros procesos.
+
+
+**6.2 Actividad: Fragmentación**
+
+
+
+
 # Punto 7: TLB (*Translation Lookaside Buffer*)
 
 ## Ejecución del código durante 3 veces
