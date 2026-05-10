@@ -556,12 +556,36 @@ Los demás bits de la entrada de tabla de páginas (PTE) se utilizan como bits d
 **5.2 Actividad: Simulador de paginación**
 
 
+
 **5.3 Actividad: Simulador — Analisis**
 
 **1. Compile y ejecute el simulador. Muestre la salida completa.**
-**2. ¿Qué ocurre con las VAs 0x10 y 0xA3? ¿Qu´e debería hacer el SO real ante un page fault?**
-**3. ¿Cuántos accesos a memoria física requiere completar una instrucci´on load con tabla de paginas de un solo nivel? ¿Por qu´e es costoso y que solución de hardware existe?**
+
+<img width="571" height="188" alt="image" src="https://github.com/user-attachments/assets/c05898d8-c3a2-4919-805c-6dfaefabe386" />
+
+**2. ¿Qué ocurre con las VAs 0x10 y 0xA3? ¿Qué debería hacer el SO real ante un page fault?**
+
+La dirección virtual 0x10 produce un page fault porque la página virtual a la que pertenece no se encuentra cargada en memoria RAM. Al calcular el VPN (Virtual Page Number), se obtiene el valor 1, y en la tabla de páginas la posición 1 contiene -1, lo que indica que la página no está presente en memoria física.
+
+En cambio, la dirección virtual 0xA3 no produce un page fault. Su VPN corresponde a la página virtual 10 y, según la tabla de páginas, esta sí está asociada a un marco físico válido (PFN = 4). Por ello, la dirección puede traducirse correctamente a una dirección física.
+
+Cuando ocurre un page fault, el sistema operativo debe interrumpir temporalmente la ejecución del proceso y verificar si la dirección solicitada es válida. Si la página existe pero no está cargada en RAM, el SO la busca en disco, la carga en un marco libre de memoria física, actualiza la tabla de páginas y luego continúa la ejecución del programa. Si la dirección es inválida o el proceso no tiene permisos de acceso, el sistema operativo termina el proceso generando un segmentation fault.
+
+**3. ¿Cuántos accesos a memoria física requiere completar una instrucción load con tabla de paginas de un solo nivel? ¿Por qué es costoso y que solución de hardware existe?**
+
+Con una tabla de páginas de un solo nivel, una instrucción load necesita dos accesos a memoria física. El primero se hace para buscar en la tabla de páginas la traducción de la dirección virtual y obtener el PFN correspondiente. El segundo acceso se realiza para leer el dato real desde la memoria física.
+
+Esto es costoso porque por cada acceso a memoria que hace el programa, el procesador debe realizar dos lecturas en RAM, lo que aumenta el tiempo de ejecución y hace más lento el sistema.
+
+Para mejorar el rendimiento existe una solución de hardware llamada TLB (Translation Lookaside Buffer). El TLB funciona como una memoria caché que guarda traducciones recientes de direcciones virtuales a físicas. Si la traducción ya está en el TLB, no es necesario consultar la tabla de páginas nuevamente, reduciendo el tiempo de acceso a memoria..
+
 **4. ¿Qué ventaja tiene la paginación sobre la segmentación en cuanto al fenomeno de fragmentación?**
+
+La principal ventaja de la paginación sobre la segmentación es que evita la fragmentación externa. En la paginación, tanto las páginas virtuales como los marcos de memoria física tienen un tamaño fijo, por lo que cualquier página puede almacenarse en cualquier frame libre de la memoria RAM.
+
+En cambio, en la segmentación los segmentos tienen tamaños variables, lo que provoca que con el tiempo queden espacios libres pequeños y dispersos en memoria. Aunque exista suficiente memoria total disponible, puede no haber un bloque contiguo lo suficientemente grande para almacenar un nuevo segmento, generando fragmentación externa.
+
+La paginación reduce este problema porque trabaja con bloques de tamaño fijo. Sin embargo, puede producir fragmentación interna, ya que una página puede no utilizar completamente el espacio del frame asignado.
 
 # Punto 7: TLB (*Translation Lookaside Buffer*)
 
