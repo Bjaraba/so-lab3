@@ -555,7 +555,7 @@ Los demás bits de la entrada de tabla de páginas (PTE) se utilizan como bits d
 - 
 **5.2 Actividad: Simulador de paginación**
 
-![Ver Programa simulador de paginacion]([/punto-1/images/program-execution.png](https://github.com/Bjaraba/so-lab3/blob/main/punto-5/paging%20sim.c))
+[Ver Programa simulador de paginacion](https://github.com/Bjaraba/so-lab3/blob/main/punto-5/paging%20sim.c)
 
 **5.3 Actividad: Simulador — Analisis**
 
