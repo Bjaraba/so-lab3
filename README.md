@@ -764,8 +764,29 @@ Esto sucede típicamente en un slab allocator, porque este sistema trabaja con b
 
 **6.2 Actividad: Fragmentación**
 
+<img width="463" height="151" alt="image" src="https://github.com/user-attachments/assets/108a78f8-07d2-4e30-9313-f70c872d9c46" />
 
+[Ver programa fragmentacion](https://github.com/Bjaraba/so-lab3/blob/main/punto-6/fragmentation.c))
 
+**1.¿Son consecutivas en memoria las direcciones asignadas? ¿Qué patrón de separación observa entre bloques contiguos?**
+
+Las direcciones asignadas por malloc() generalmente aparecen cercanas entre sí, pero no completamente consecutivas. Entre bloques contiguos se observa una pequeña separación debido a la información de control que el allocator de glibc guarda internamente para administrar cada bloque de memoria, como tamaño, estado y enlaces de la lista libre.
+
+Además, el allocator puede aplicar alineación de memoria para mejorar el rendimiento del procesador, por lo que las direcciones no aumentan exactamente según el tamaño solicitado.
+
+**2. ¿Tiene éxito la asignación final de 1500 bytes? Explique el resultado en términos de fragmentación?**
+
+Sí tiene éxito,aunque durante la ejecución se liberan varios bloques y se generan huecos en memoria, el allocator de glibc puede solicitar más memoria al sistema operativo si no encuentra un bloque continuo suficientemente grande dentro del heap actual. Por esta razón, la asignación logra completarse.
+
+Este comportamiento muestra que la fragmentación externa puede dificultar reutilizar los espacios libres existentes, pero el allocator puede ampliar el heap para satisfacer solicitudes grandes.
+
+**3. Consulta: ¿Cuál es la diferencia entre el allocator de usuario (malloc/glibc) y el del kernel(buddy system, slab)? ¿Por qué existen dos niveles de gestión de memoria?**
+
+El allocator de usuario, como malloc() de glibc, administra la memoria dinámica utilizada por los programas en espacio de usuario. Su función es entregar bloques de memoria a las aplicaciones y reutilizar los espacios liberados.
+
+Por otro lado, el allocator del kernel administra la memoria interna del sistema operativo. El buddy system se utiliza para asignar bloques de páginas físicas y el slab allocator optimiza la creación de objetos frecuentes del kernel, como estructuras de procesos o buffers.
+
+Existen dos niveles de gestión porque el sistema operativo y las aplicaciones tienen necesidades diferentes. El kernel necesita un control más eficiente y seguro de la memoria física, mientras que las aplicaciones requieren una interfaz más sencilla y flexible para manejar memoria dinámica.
 
 # Punto 7: TLB (*Translation Lookaside Buffer*)
 
