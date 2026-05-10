@@ -381,6 +381,187 @@ La principal limitación es la fragmentación interna.
 El sistema reserva bloques contiguos de memoria para cada proceso, lo que puede desperdiciar espacio cuando el proceso no utiliza completamente la memoria asignada.
 
 ---
+# Punto 4:  Segmentacion
+
+**1. Muestre el cálculo paso a paso para cada VA.**
+
+**VA = 0x03A0** 
+
+Selector: 00  Code
+Offset: 0x3A0=(3×256)+(10×16)+0=928
+Tamaño Code: 2KB=2×1024=2048
+928<2048   válido
+
+Calcular PA:
+
+PA=base+offset
+PA=0x4000+0x3A0=0x43A0
+PA 0x43A0
+
+
+**VA = 0x1800**
+
+Selector: 01 Heap
+Offset: 0x800=(8×256)+0+0=2048
+Tamaño Heap: 3KB=3×1024=3072
+2048<3072 válido
+
+Calcular PA:
+
+PA=base+offset
+PA=0x6000+0x800=0x6800
+PA 0x6800
+
+**VA = 0x3C00**
+
+Selector:11 Stack 
+Offset:0xC00=3072  
+Tamaño Stack: 2KB= 2x1024=2048
+3072>2048  no válido
+
+EXCEPCIÓN (segmentation fault)
+
+**VA = 0x0C00**
+
+Selector: 00 Code
+Offset: 0xC00=(12×256)+0+0=3072 
+Tamaño Code: 2KB= 2x1024=2048
+3072>2048  no válido
+
+EXCEPCIÓN 
+
+**VA = 0x2200** 
+
+Selector: 10 
+Offset: 0x200=512 
+Segmento no definido
+
+EXCEPCIÓN 
+
+**2. ¿Por qué el Stack crece en dirección negativa? ¿Qué ajuste especial requiere la fórmula al calcular el PA?**
+
+El Stack crece en dirección negativa porque normalmente inicia en direcciones altas de memoria y va descendiendo hacia direcciones menores a medida que se agregan variables locales, parámetros y llamadas a funciones. Esto permite que el Stack y el Heap crezcan en direcciones opuestas y aprovechen mejor el espacio de memoria disponible.
+
+En los segmentos que crecen positivamente (como Code y Heap), la dirección física se calcula así:
+
+PA=base+offset
+
+Sin embargo, como el Stack crece hacia abajo, el cálculo cambia a:
+
+PA=base−offset
+
+Es decir, el offset se resta en lugar de sumarse.
+
+**3. ¿Qué ventaja tiene la segmentación frente a base & bounds en cuanto a utilización de la memoria física?**
+
+La principal ventaja de la segmentación es que divide el espacio de direcciones en varios segmentos lógicos independientes, como código, heap y stack, cada uno con su propio tamaño y permisos.
+En base & bounds todo el proceso debe ocupar una única región contigua de memoria, lo que puede desperdiciar espacio y dificultar el crecimiento dinámico.
+
+Con segmentación:
+
+- Cada segmento puede ubicarse en diferentes partes de la memoria física.
+- Se aprovecha mejor el espacio disponible.
+- Es posible proteger segmentos individualmente.
+- Se facilita el crecimiento independiente del heap y del stack.
+
+Por esta razón, la segmentación ofrece una utilización más flexible y eficiente de la memoria física.
+
+**4. Qué es la fragmentación externa? ¿Por qué surge con segmentación? Ilustre con un diagrama de bloques de memoria.**
+
+La fragmentación externa ocurre cuando existe suficiente memoria libre total, pero está dividida en pequeños bloques no contiguos. Debido a esto, una solicitud grande de memoria puede fallar aunque la suma de espacios libres sea suficiente.
+En segmentación, cada segmento tiene tamaño variable y puede crecer o liberarse en diferentes momentos. Esto provoca que queden huecos dispersos en la memoria física.
+
+Ejemplo:
+
+ Libre 100 | Ocupado   | Libre 80  | Ocupado   | Libre 90  |
+
+En este caso:
+
+100+80+90=270 bytes libres
+
+Pero una solicitud de 200 bytes continuos podría fallar porque no existe un bloque contiguo suficientemente grande.
+
+La fragmentación externa es uno de los principales problemas de la segmentación y motivó el uso de paginación en sistemas modernos.
+
+# Punto 5:  Paginación
+
+**5.1 Actividad: Calculo de la tabla de paginas**
+
+**1. ¿Cuántos bits se necesitan para el VPN y cuántos para el offset?**
+
+El tamaño de página es:4KB=4096=2^12
+
+Por lo tanto:
+
+- Se necesitan 12 bits para el offset.
+- El espacio virtual es de 32 bits.
+
+Entonces:
+
+VPN=32−12=20extbits
+
+Resultado
+Campo	Bits
+VPN	20 bits
+Offset	12 bits
+
+**2. ¿Cuántas entradas tiene la tabla de páginas de un proceso?**
+
+Cada página virtual necesita una entrada en la tabla.
+
+Como el VPN tiene 20 bits:
+
+2^20 =1,048,576
+
+
+Resultado
+
+La tabla de páginas tiene: 1,048,576 entradas
+
+
+**3. ¿Cuanta memoria ocupa la tabla de paginas completa? ¿Es razonable ese tamaño para cada proceso?**
+
+Cada entrada de la tabla de páginas (PTE) ocupa: 4 bytes y la tabla tiene: 1,048,576 entradas
+
+Entonces el tamaño total es:
+
+1,048,576×4=4,194,304 bytes
+
+4,194,304 bytes ≈ 4 MB
+
+Resultado
+
+La tabla de páginas completa ocupa aproximadamente: 4 MB
+
+El tamaño no es razonable completamenta, ya que tener una tabla de páginas de 4 MB para cada proceso consumiría demasiada memoria en sistemas con muchos procesos ejecutándose al mismo tiempo.
+
+**4. ¿Cuántos bits necesita el PFN dentro de la PTE? ¿Qué información almacenan los bits restantes? Mencione al menos 3 bits de control y su función.**
+
+El espacio físico es de 20 bits = 1MB=2^20
+
+El tamaño de página es: 4KB = 2^12
+
+Entonces, los bits necesarios para el offset son 12 bits. Los bits restantes corresponden al PFN (Physical Frame Number): PFN=20−12=8 bits
+
+Resultado
+
+El PFN necesita: 8 bits porque la memoria física tiene: 2^8=256 marcos físicos posibles.
+
+Los demás bits de la entrada de tabla de páginas (PTE) se utilizan como bits de control y protección.
+
+- Present/Valid: Indica si la página está cargada en memoria RAM
+- Dirty: Indica si la página fue modificada desde que se cargó
+- -Referenced/Accessed: Indica si la página fue utilizada recientemente
+- 
+**5.2 Actividad: Simulador de paginación**
+
+
+**5.3 Actividad: Simulador — Analisis**
+
+**1. Compile y ejecute el simulador. Muestre la salida completa.**
+**2. ¿Qué ocurre con las VAs 0x10 y 0xA3? ¿Qu´e debería hacer el SO real ante un page fault?**
+**3. ¿Cuántos accesos a memoria física requiere completar una instrucci´on load con tabla de paginas de un solo nivel? ¿Por qu´e es costoso y que solución de hardware existe?**
+**4. ¿Qué ventaja tiene la paginación sobre la segmentación en cuanto al fenomeno de fragmentación?**
 
 # Punto 7: TLB (*Translation Lookaside Buffer*)
 
