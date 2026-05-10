@@ -386,7 +386,7 @@ El sistema reserva bloques contiguos de memoria para cada proceso, lo que puede 
 **1. Muestre el cálculo paso a paso para cada VA.**
 
 **VA = 0x03A0** 
-
+-----
 Selector: 00  Code
 Offset: 0x3A0=(3×256)+(10×16)+0=928
 Tamaño Code: 2KB=2×1024=2048
@@ -400,7 +400,7 @@ PA 0x43A0
 
 
 **VA = 0x1800**
-
+-----
 Selector: 01 Heap
 Offset: 0x800=(8×256)+0+0=2048
 Tamaño Heap: 3KB=3×1024=3072
@@ -413,7 +413,7 @@ PA=0x6000+0x800=0x6800
 PA 0x6800
 
 **VA = 0x3C00**
-
+-----
 Selector:11 Stack 
 Offset:0xC00=3072  
 Tamaño Stack: 2KB= 2x1024=2048
@@ -422,7 +422,7 @@ Tamaño Stack: 2KB= 2x1024=2048
 EXCEPCIÓN (segmentation fault)
 
 **VA = 0x0C00**
-
+-----
 Selector: 00 Code
 Offset: 0xC00=(12×256)+0+0=3072 
 Tamaño Code: 2KB= 2x1024=2048
@@ -431,7 +431,7 @@ Tamaño Code: 2KB= 2x1024=2048
 EXCEPCIÓN 
 
 **VA = 0x2200** 
-
+-----
 Selector: 10 
 Offset: 0x200=512 
 Segmento no definido
@@ -594,7 +594,7 @@ La paginación reduce este problema porque trabaja con bloques de tamaño fijo. 
 First Fit selecciona el primer bloque libre que sea suficientemente grande.
 
 Solicitud 1: malloc(212)
-
+-----
 100 → no cabe
 500 → sí cabe
 
@@ -610,9 +610,9 @@ Dirección	Tamaño
 0x0400	   200
 0x0500	   300
 0x0700	   600
----
-Solicitud 2: malloc(417)
 
+Solicitud 2: malloc(417)
+-----
 100 → no cabe
 288 → no cabe
 200 → no cabe
@@ -631,9 +631,11 @@ Dirección	Tamaño
 0x0400	   200
 0x0500	   300
 0x08A1	   183
-----
+
 
 Solicitud 3: malloc(98)
+-----
+
 100 → sí cabe
 
 Espacio restante: 100−98=2
@@ -646,9 +648,9 @@ Dirección 	Tamaño
 0x0400      	200
 0x0500	      300
 0x08A1	      183
----
 
 Solicitud 4: malloc(426)
+-----
 
 2 → no cabe
 288 → no cabe
@@ -667,7 +669,7 @@ Dirección	Tamaño
 0x0400	   200
 0x0500	   300
 0x08A1	   183
----
+
 
 
 **2. Repita con best fit. ¿Cambia el resultado?**
@@ -675,7 +677,7 @@ Dirección	Tamaño
 Best Fit selecciona el bloque más pequeño posible que pueda satisfacer la solicitud.
 
 malloc(212)
-
+-----
 Bloques posibles:
 
 500
@@ -685,10 +687,10 @@ Bloques posibles:
 El más ajustado es: 300 bytes
 
 Resto: 300−212=88
----
+
 
 malloc(417)
-
+-----
 Bloques posibles:
 
 500
@@ -697,10 +699,10 @@ Bloques posibles:
 El mejor ajuste es: 500 bytes
 
 Resto: 500−417=83
----
+
 
 malloc(98)
-
+-----
 Bloques posibles:
 
 100
@@ -710,10 +712,9 @@ Bloques posibles:
 El mejor ajuste es: 100 bytes
 
 Resto: 100−98=2
----
 
 malloc(426)
-
+-----
 Solo queda disponible: 600 bytes
 
 Resto: 600−426=174
@@ -725,7 +726,7 @@ Todas las solicitudes pueden asignarse correctamente.
 
 Lista libre final:
 
-Dirección	     Tamaño
+Dirección	      Tamaño
 bloque restante	2
 bloque restante	83
 bloque restante	200
