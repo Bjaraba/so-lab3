@@ -1,6 +1,11 @@
 # Laboratorio 3 - Sistemas Operativos
 
+Enlace de Video:
+
+https://drive.google.com/file/d/1S_Yrrk5KrsM0D57ib5GfqkjPA5mGM9SE/view?usp=sharing
+
 Integrantes
+
 Kelly Julieth Arango Henao
 
 kjulieth.arangoh@udea.edu.co
@@ -525,7 +530,7 @@ Por lo tanto:
 
 Entonces:
 
-VPN=32−12=20extbits
+VPN=32−12=20 bits
 
 Resultado
 Campo	Bits
@@ -782,7 +787,7 @@ la memoria libre total sería de 300 bytes. Sin embargo, si no se realiza coales
 
 Si se aplica coalescing, los tres bloques se unen formando un bloque de 300 bytes y la solicitud podría realizarse correctamente.
 
-**5. ¿Qué es la fragmentación interna? ¿Cuándo aparece tipicamente al usar un slab allocator?
+**5. ¿Qué es la fragmentación interna? ¿Cuándo aparece tipicamente al usar un slab allocator?**
 
 La fragmentación interna ocurre cuando se asigna un bloque de memoria más grande de lo que realmente necesita el programa, dejando espacio desperdiciado dentro del bloque asignado.
 
